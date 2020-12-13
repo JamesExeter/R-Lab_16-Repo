@@ -1,0 +1,136 @@
+---
+title: "Assignment16"
+author: "James Brock"
+date: "11/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(QSARdata)
+library(glmnet)
+library(ggplot2)
+```
+
+# Part 1
+1) A regression model is a learning function defined as $\phi: x \rightarrow R$ which takes an input vector $X \in x$ and returns a continuous variable $\phi(X) \in R$ known as the label. Unlike a classification model, a class label is not returned but instead a continuous variable.
+
+2) Training data consists of a set of labelled data, $D = ((X_1, Y_1),...,(X_n, Y_n))$. A sequence of ordered pairs $(X_i, Y_i)$ where $X_i$ is a feature vector and $Y_i$ is a numerical label associated with $Y_i$. In a regression model the numerical label is a continuous value.
+
+3) The $R_{MSE}$ or Expected Mean Squared Error on the test data is quantified through: $R_{MSE}(\phi) := E[(\phi(X)-Y)^2]$. For the predictions made on the test data by $\phi(X)$, and then subtracting the prediction from the actual label, squaring the result to remove negative values and punishing more inaccurate predictions more. This works when we have random variables (X, Y) ~ P with joint distributions P on X x R. Our goal of the regression model $/phi: x \rightarrow R$, such that $\phi(X) \approx Y$ for typical (X, Y) ~ P. A good regression model is one with a low expected test error. We can't directly observe the test error however since we do not know the underlying distribution P.
+
+4) The Expect Mean Squared Error on the training data is used to create an approximation of the test error. To compute the mean squared error on the training data: $R_{MSE}(\phi) := \frac{1}{n}\sum_{i=1}^n (\phi(X_i) - Y_i)^2$. This is also called the empirical mean squared error, and it is the average of the squared training error. The training data is used to quantify this error rather than the test data since we know the underlying distribution P. 
+
+5) Supervised learning is the act of training a machine learning model where the input data contains labels with the feature vectors. Using the labels we can create a function that maps input vectors to the associated labels. 
+
+6) Probably meant linear regression: Linear regression models fit a straight line to the data. Suppose we have d continuous features $X = (X^1,...,X^d) \in X = R^d$. A linear regression model $\phi: X \rightarrow R$ is of the form $\phi(x) = w^0 + w^1 \cdot x^1 + w^2 \cdot x^2 + ... + w^d \cdot x^d$ for $(x^1, x^2, ,,,, x^d) \in R^d$, with weights $w = (w^1, ... , w^d) \in R^d$ and a bias $w^0 \in R$. THis can be rewritten more concisely as $\phi(x) = wx^T + w^0$ where $(a^1,...,a^d)(b^1,...,b^d)^T = a^1 \cdot b^1 + ... + a^db^d$.
+
+# Part 2
+1) Regularization is used within linear regression to help the more model generalise more to the testing data, whilst reducing the effectiveness on the training data. In this regard it has the potential to reduce overfitting but after a certain point, too much regularization harms the model so an investigation needs to be carried out to find the correct level of regularization. Regularization helps us to train a model that ignores statistical noise in the model and only focus on true properties of the data and not random chance. It works by shrinking the coefficient estimates towards zero, discouraging the learning of a more complex model. Increased regularization increases the bias but lowers the variance, a good trade-off needs to be found.
+
+2) A hyper parameter is a value that controls the level of regularization applied to a model, near zero values indicate very little regularization whereas larger values indicate large levels of regularization. It is called a hyper-parameter since it is an extra parameter added to a regression model that is not essential. Increasing the hyper parameter value increases the MSE on the training data and the statistical bias. However, it reduces the norm of the weights $||\hat w_\lambda||_2$ and reduces the statistical variance of the estimate.
+
+3) The Euclidean norm is mathematically defined as: $||w||_2 = \sqrt((w_1)^2+...+(w_d)^2)$. It is commonly used to help us measure the size of weight vectors within linear regression models where weight vectors are defined as: $w = (w_1,...,w_d) \in R^d$. This is used extensively within Ridge Regression to help use reduce the instability of our estimate by limiting our search space to a "smaller" models. $||w||_2$ is also known as the $\ell_2$ norm, which is a regularization term.
+
+4) The $\ell_1$ norm is used when we are trying to minimize the rescaled negative log-likelihood, which is another method of quantifying performance when producing better models. The L1 norm used in regularised logistic regression works by penalizing $||w||_1 = |w_1| + ... + |w_d|$ for $w = (w_1,...,w_d) \in R^d$. This method gives rise to sparse solutions but can be unstable. Mathematically, the L1 norm. ak.a the Manhattan Distance is the sum of the magnitudes of the vectors in a space.
+
+5) Validation data is a third set of data that is used during the training of a regression model. It is used to help us choose a value for hyper-parameters to be used for regularization. The validation data is not shown to the model during training much like the test data, it is instead used to give an unbiased estimate of the performance of the final tuned model when comparing or selecting between final models.
+
+6) The train-validation-test split is used to help us find the best hyper-parameter value over a set os possible values that strikes the perfect balance between train and test error. We begin by selecting a range of possible hyper-parameters $\lambda_1,...\lambda_Q$. For each q = $1,...,Q$, we train a model $\hat \phi_{lamba_q}$ based on the training data and the hyper-parameter $\lambda_q$. Then from this, we compute the average error on the validation error for that hyper-parameter to be compared to later. We then choose a hyper-parameter $\hat \lambda \in \{\lambda_1,...,\lambda_Q\}$ that minimizes the average error on the training data. We finally use the test data to estimate the performance on unseen data for our selected hyper-parameter and return the selected model. A common train-validation-test split ratio is 80:20 on the training to test and then 80:20 on the training to validation. If using a k-fold cross validation however this ratio will vary.
+
+7) When searching over a large dimensional space of all linear model in linear regression, a lot of instability is generated. To reduce this instability in our estimate we can limit our search space to "smaller" models. By considering a linear model such as $\phi_{w, w_0}: R^d \rightarrow R$ and $\phi_{w, w^0(x)} = wx^T + w^0$, the OLS method minimizes the empirical  error whereas the ride regression method minimizes the regularized objective as well and is defined as in the simplest terms: $\hat R_\lambda = \frac{1}{n} \sum_{i=1}^n (wx^T + w^0 - Y_i)^2 + \lambda \cdot||w||_2^2$. Lambda in this case is the hyper-parameter that controls the level of regularization. The solution is $\hat w_\lambda = \sum_{Y,X}(\sum_{X,X} + \lambda \cdot I_d)^{-1}$ and $\hat w_0 = \bar Y - \hat w_\lambda \bar X^T$. All the definitions for each component of the above formula can be found in the notes. Whenever lambda is greater than zero, the matrix $\sum_{X,X} + \lambda \cdot I_d$ is invertible, avoiding the numerical issues encountered by the OLS when $\sum_{X,X}$ isn't invertible.
+ 
+8) Like ridge regression, the lasso method also minimizes the regularized objective, but instead of $||w||_2$, the regularized objective is $||w||_1$ which denotes the $\ell_1$ norm which was defined earlier. The advantage of lasso is that when in a high-dimensional setting with d number of variables, perhaps only a small number of them are relevant s << d. Let $S \subseteq \{1,...,d\}$ be the set of all relevant features with |S| = s. An ideal solution $\phi{w,w^0}$ would have weights $w = (w_1,...,w_d) \in R^d$ with zero weights $w_j = 0$ whenever $j \notin S$. An advantage of LASSO is that it often returns a sparse solution with lots of zero weights $\hat w_j = 0$. We can use LASSO to estimate the set of S by $\hat S = \{j \in \{1,...,d\} : \hat w_j = 0\}$. Lasso returns a sparse solution with automated variable selection and performs well when there are a small number of relevant features but has no closed form solution and the results can be unstable when several features are "similar" in some sense.
+
+# Part 3
+```{r part3, echo=FALSE}
+data(MeltingPoint) #import data
+
+mp_data_total <- MP_Descriptors %>% # create new data frame but adding melting point column from one dataframe to the other
+  add_column(melting_pt = MP_Outcome)
+
+dim(mp_data_total) # get the dimensions of the new dataframe
+
+num_total <- mp_data_total %>% nrow() #find the total number of examples
+num_train <- floor(0.5*num_total) # total number of training samples
+num_validate <- floor(0.25*num_total) # total number of validation samples
+num_test <- num_total - num_train - num_validate # total number of testing samples
+
+set.seed(123) # set randomisation seed
+test_inds <- sample(seq(num_total), num_test) # generate the test indices
+validate_inds <- sample(setdiff(seq(num_total), test_inds), num_validate) # generate the validation indices
+train_inds <- setdiff(seq(num_total), union(validate_inds, test_inds)) # the training indices are everything left over
+
+mp_train <- mp_data_total %>% filter(row_number() %in% train_inds) # train data
+mp_validate <- mp_data_total %>% filter(row_number() %in% validate_inds) # validation data
+mp_test <-mp_data_total %>% filter(row_number() %in% test_inds) # test data
+
+mp_train_x <- mp_train %>% select(-melting_pt) %>% as.matrix() # train features
+mp_train_y <- mp_train %>% pull(melting_pt) #train labels
+
+mp_validate_x <- mp_validate %>% select(-melting_pt) %>% as.matrix() #validate features
+mp_validate_y <- mp_validate %>% pull(melting_pt) # validate labels
+
+mp_test_x <- mp_test %>% select(-melting_pt) %>% as.matrix() # test features
+mp_test_y <- mp_test %>% pull(melting_pt) # test labels
+
+ridge_train_validate_error <- function(train_x, train_y, validate_x, validate_y, lambda){
+  glmRidge = glmnet(x=train_x, y=train_y, alpha=0, lambda=lambda) # train model
+  
+  train_y_est <- predict(glmRidge, newx=train_x) # train predictions
+  train_error = mean((train_y-train_y_est)^2) # train error
+  
+  validate_y_est <- predict(glmRidge, newx=validate_x) # validation predictions
+  validate_error <- mean((validate_y-validate_y_est)^2) # validation error
+  
+  return(list(train_error=train_error, validate_error=validate_error)) 
+}
+
+lambda_min = 0.0000001
+lambdas = lambda_min*(1.25^seq(80))
+
+ridge_results_df <- data.frame(lambda=lambdas) %>%
+  mutate(out=map(lambda, ~ridge_train_validate_error(train_x=mp_train_x, train_y=mp_train_y, validate_x=mp_validate_x, validate_y=mp_validate_y, lambda=.x))) %>%
+  mutate(train_error=map_dbl(out,~((.x)$train_error)), validate_error=map_dbl(out,~((.x)$validate_error))) %>% select(-out)
+
+plot_lambdas_error <- ggplot(ridge_results_df, aes(x=lambda, y=validate_error)) + geom_line() + scale_x_continuous(trans="log10", "Lambda") + ylab("Validation error") # plot the lambda values against the validation error
+
+plot_lambdas_error
+
+min_validation_error <- ridge_results_df %>%
+  pull(validate_error) %>% min() # find the minimum validation error
+
+optimal_lambda <- ridge_results_df %>% # extract the lambda value by finding the row with the matching minimum validation error
+  filter(validate_error==min_validation_error) %>% 
+  pull(lambda)
+
+optimal_lambda
+
+best_ridge_model <- glmnet(x=mp_train_x, y=mp_train_y, alpha=0, lambda=optimal_lambda) # train new model using best lambda
+best_ridge_test_y_est <- predict(best_ridge_model, newx=mp_test_x) # test predictions
+best_ridge_test_error <- mean((mp_test_y - best_ridge_test_y_est)^2) # test error
+
+best_ridge_test_error
+
+#compare with olm
+ols_model <- glmnet(x=mp_train_x, y=mp_train_y, alpha=0,lambda=0) # create ols model
+
+ols_test_y_est <- predict(ols_model, newx=mp_test_x) # test predictions
+ols_test_error <- mean((mp_test_y-ols_test_y_est)^2) # test error
+
+ols_test_error
+
+```
+
+There are 203 variables and 4401 examples in the mp_data_total dataframe.
+This method increases the statistical bias so it could be said that this leads to a bias estimate as the model is trained to generalize more to the overall traits of the data and not statistical noise, causing a reduction in the statistical variance. Hence hyper-parameter tuning outside of cross-validation can lead to biased-high estimates of external validity, because the dataset that you use to measure performance is the same one used to tune the features.
+
+Somehow the ols default model did slightly better than the ridge model. Likely because the lowest found hyper-parameter value for the validation data had a slight different result when compared to the final result on the test data.
+
+The validation mean squared error cannot be used be used as an estimate of the mean squared error on the test data because when we find our optimal lambda value, the validation data would have already been seen by the resulting model when we train it for the second time. Therefore, we cannot use the validation data MSE since the validation data doesn't qualify as unseen data, invalidating it for use as a test error estimate.
+
+The way in which the hyper-parameter value for lambda is found is not the most efficient as you lose some of your training or test data to validation set and the model needs to be trained each time you have a new lambda value and then needs to be retrained once the best lambda value is found. You could store every trained model and then once you've found the best lambda model you could select it from storage and delete the rest but for large models this amount of storage would be unfeasible. Another methodology would be k-fold cross validation algorithms where the data is shuffled and then partitioned k number of times. In turn, one of the groups is used as test data and the rest are used to train the model which is then evaluated, the score recorded and then the model discarded. This is repeated for every group and then the model is evaluated as the average of the scores. The value of k can be configured using an algorithmic approach. The higher the value of k, the more memory that is used in the validation process.
+
+# Part 4
+
+No need to do this, more theoretical than anything.
